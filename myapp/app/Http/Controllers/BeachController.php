@@ -23,9 +23,9 @@ class BeachController extends Controller
     {
         try {
             $search = $request->query("search");
+            $region_id = $request->query("region_id");
 
             $query = Beach::with(['images', 'region'])->orderBy('id', 'desc');
-
 
             if ($search) {
                 $query->where(function ($q) use ($search) {
@@ -37,7 +37,20 @@ class BeachController extends Controller
                 });
             }
 
-            $beaches = $query->get();
+            if ($region_id) {
+                $query->where('region_id', $region_id);
+            }
+
+            // Keep query parameters in pagination links
+            $appends = [];
+            if ($search) $appends['search'] = $search;
+            if ($region_id) $appends['region_id'] = $region_id;
+
+            if (!empty($appends)) {
+                $beaches = $query->paginate(10)->appends($appends);
+            } else {
+                $beaches = $query->paginate(10);
+            }
 
             return response()->json([
                 'success' => true,

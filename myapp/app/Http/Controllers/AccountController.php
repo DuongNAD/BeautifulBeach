@@ -33,10 +33,20 @@ class AccoutController extends Controller
     {
         try {
             $search  = $request->query("search");
-            $rsSearchAccount  = Account::where('full_name', 'LIKE', '%' . $search . '%')
-                ->orWhere('email', 'LIKE', "%{$search}%")
-                ->orWhere('phone', 'LIKE', "%{$search}%")->get();
-            return $this->response->json(true, data: !$search ? Account::all() : $rsSearchAccount, status: 200);
+            
+            $query = Account::query();
+            
+            if ($search) {
+                $query->where('full_name', 'LIKE', '%' . $search . '%')
+                      ->orWhere('email', 'LIKE', "%{$search}%")
+                      ->orWhere('phone', 'LIKE', "%{$search}%");
+                
+                $rsSearchAccount = $query->paginate(10)->appends(['search' => $search]);
+            } else {
+                $rsSearchAccount = $query->paginate(10);
+            }
+            
+            return $this->response->json(true, data: $rsSearchAccount, status: 200);
         } catch (\Throwable $th) {
             return $this->response->json(false, errors: $th->getMessage(), status: 500);
         }

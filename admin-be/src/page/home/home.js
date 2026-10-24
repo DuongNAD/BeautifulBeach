@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Hero from "../../components/Hero";
-import { motion } from "framer-motion";
 import Testimonial from "../../components/Review";
-import { 
-  FaHeart, 
-  FaRegComment, 
-  FaMapMarkerAlt, 
-  FaChartLine, 
-  FaCalendarDay, 
-  FaGlobe, 
-  FaUsers 
+import {
+  FaHeart,
+  FaRegComment,
+  FaMapMarkerAlt,
+  FaChartLine,
+  FaCalendarDay,
+  FaGlobe,
+  FaUsers
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -56,21 +55,21 @@ function Home() {
     try {
       await visitAdd();
       sessionStorage.setItem("visited", "true");
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const fectDataImageBe = async () => {
     try {
       const rs = await ImageBanner(2);
       setImageBetifu(rs?.data?.data || []);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const visit = async () => {
     try {
       const rs = await visitTotal();
       setStats(rs?.data);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const fectData = async () => {
@@ -97,7 +96,7 @@ function Home() {
       }
       setFavoritesState(favState);
       setFavoritesCount(favCount);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const enventStatus = async (id) => {
@@ -164,18 +163,18 @@ function Home() {
 
       <div className="relative -mt-10 z-20 px-4">
         <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-           <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center justify-center gap-2">
-                 <FaChartLine className="text-blue-500" /> Site Traffic Overview
-              </h2>
-           </div>
-           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <StatCard title="Today" value={stats.today} icon={<FaCalendarDay />} color="text-green-500" />
-              <StatCard title="Week" value={stats.week} icon={<FaChartLine />} color="text-blue-500" />
-              <StatCard title="Month" value={stats.month} icon={<FaCalendarDay />} color="text-purple-500" />
-              <StatCard title="Online" value={stats.online} icon={<FaGlobe />} color="text-red-500" />
-              <StatCard title="Total Visits" value={stats.total} icon={<FaUsers />} color="text-orange-500" />
-           </div>
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center justify-center gap-2">
+              <FaChartLine className="text-blue-500" /> Site Traffic Overview
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <StatCard title="Today" value={stats.today} icon={<FaCalendarDay />} color="text-green-500" />
+            <StatCard title="Week" value={stats.week} icon={<FaChartLine />} color="text-blue-500" />
+            <StatCard title="Month" value={stats.month} icon={<FaCalendarDay />} color="text-purple-500" />
+            <StatCard title="Online" value={stats.online} icon={<FaGlobe />} color="text-red-500" />
+            <StatCard title="Total Visits" value={stats.total} icon={<FaUsers />} color="text-orange-500" />
+          </div>
         </div>
       </div>
 
@@ -205,61 +204,76 @@ function Home() {
             className="pb-12 !px-4"
           >
             {beaches.map((b, i) => (
-              <SwiperSlide key={i} className="pb-10">
-                <div className="group h-full bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 flex flex-col">
+              <SwiperSlide key={i} className="pb-12 pt-4">
+                <div className="group h-full bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 flex flex-col relative">
 
-                  <div className="relative h-64 overflow-hidden">
+                  <div className="relative h-72 overflow-hidden rounded-t-[2.5rem]">
                     <img
                       src={
                         b.images && b.images.length > 0
-                          ? (b.images[0].img_link?.startsWith('http') 
-                              ? b.images[0].img_link 
-                              : url + b.images[0].img_link)
+                          ? (b.images[0].img_link?.startsWith('http')
+                            ? b.images[0].img_link
+                            : url + b.images[0].img_link)
                           : "https://via.placeholder.com/400x300?text=No+Image"
                       }
                       alt={b.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-pointer"
+                      className="w-full h-full object-cover transition-all duration-700 group-hover:scale-[1.12] group-hover:rotate-1 cursor-pointer"
                       onClick={() => detailBeaches(b.id)}
                     />
-                    <div className="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold shadow-sm flex items-center gap-1 text-yellow-500">
-                         ★ {b.rating || "5.0"}
+                    {/* Soft gradient overlay for better text contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-black/20 pointer-events-none"></div>
+
+                    {/* Floating Rating Badge */}
+                    <div className="absolute top-5 right-5 bg-white/20 hover:bg-white/40 backdrop-blur-md px-4 py-1.5 rounded-2xl text-sm font-extrabold shadow-lg border border-white/30 flex items-center gap-1.5 text-white transition-all cursor-default">
+                      <span className="text-yellow-400">★</span> {b.rating || "5.0"}
                     </div>
+
+                    {/* Location pinned on bottom left of image */}
+                    {b.location && (
+                      <div className="absolute bottom-5 left-5 right-5 flex items-center gap-2 text-white z-10">
+                        <FaMapMarkerAlt className="text-red-400 text-lg drop-shadow-md" />
+                        <span className="font-medium text-sm drop-shadow-md truncate">{b.location}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex-1" onClick={() => detailBeaches(b.id)}>
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1">
+                  {/* Card Content - Overlapping upward design */}
+                  <div className="p-7 flex-1 flex flex-col bg-white dark:bg-gray-800 relative z-20 -mt-6 rounded-t-3xl shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.3)]">
+                    <div className="flex-1 cursor-pointer" onClick={() => detailBeaches(b.id)}>
+                      <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 group-hover:from-blue-600 group-hover:to-cyan-500 transition-all line-clamp-1">
                         {b.name}
                       </h3>
-                      <div className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-4"
-                           dangerouslySetInnerHTML={{
-                             __html: DOMPurify.sanitize(truncateHTML(b.description, 80)),
-                           }}
+                      <div className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed mb-6"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(truncateHTML(b.description, 90)),
+                        }}
                       />
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
-                      <div className="flex items-center gap-4">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); enventStatus(b.id); }}
-                            className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors group/heart"
-                          >
-                            <FaHeart className={`text-lg transition-transform group-hover/heart:scale-125 ${favoritesState[b.id] || b.favorites_count > 0 ? "text-red-500" : ""}`} />
-                            <span className="font-medium">{favoritesCount[b.id] || b.favorites_count}</span>
-                          </button>
-                          
-                          <button onClick={() => detailBeaches(b.id)} className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors">
-                            <FaRegComment className="text-lg" />
-                            <span className="font-medium">{b.comments_count}</span>
-                          </button>
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between pt-5 border-t border-gray-100 dark:border-gray-700 mt-auto">
+                      <div className="flex items-center gap-5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); enventStatus(b.id); }}
+                          className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-all group/heart bg-gray-50 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 px-3 py-1.5 rounded-full"
+                        >
+                          <FaHeart className={`text-lg transition-transform group-hover/heart:scale-125 ${favoritesState[b.id] || b.favorites_count > 0 ? "text-red-500" : ""}`} />
+                          <span className="font-semibold text-sm text-gray-600 dark:text-gray-300">{favoritesCount[b.id] || b.favorites_count}</span>
+                        </button>
+
+                        <button onClick={() => detailBeaches(b.id)} className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-all bg-gray-50 hover:bg-blue-50 dark:bg-gray-700 dark:hover:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                          <FaRegComment className="text-lg" />
+                          <span className="font-semibold text-sm text-gray-600 dark:text-gray-300">{b.comments_count}</span>
+                        </button>
                       </div>
 
                       {b.latitude && b.longitude && (
                         <button
                           onClick={(e) => { e.stopPropagation(); openMapModal(b.latitude, b.longitude); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm font-medium"
+                          className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-500 hover:to-blue-600 text-blue-600 hover:text-white dark:from-gray-700 dark:to-gray-600 dark:text-blue-400 dark:hover:from-blue-600 dark:hover:to-blue-700 dark:hover:text-white rounded-full shadow-sm hover:shadow-md transition-all duration-300"
+                          title="View on Map"
                         >
-                          <FaMapMarkerAlt /> Map
+                          <FaMapMarkerAlt />
                         </button>
                       )}
                     </div>
@@ -277,7 +291,7 @@ function Home() {
           <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 mb-10">
             Immerse yourself in the stunning visuals captured from our top destinations.
           </p>
-          
+
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -297,8 +311,8 @@ function Home() {
                 <div className="relative h-64 md:h-80 overflow-hidden rounded-2xl shadow-lg cursor-pointer group">
                   <img
                     src={
-                      b.img?.startsWith('http') 
-                        ? b.img 
+                      b.img?.startsWith('http')
+                        ? b.img
                         : url + b.img
                     }
                     alt={`slide-${i}`}
@@ -314,29 +328,29 @@ function Home() {
       </section>
 
       <section className="py-20 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
-         <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">✨ Premium Services</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">✨ Premium Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-               <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">🏖️</div>
-                  <h3 className="font-bold text-xl mb-3 dark:text-white">Beach Guides</h3>
-                  <p className="text-gray-500 dark:text-gray-300">Curated lists and hidden gems for the perfect sun-soaked getaway.</p>
-               </div>
-
-               <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">📍</div>
-                  <h3 className="font-bold text-xl mb-3 dark:text-white">Interactive Maps</h3>
-                  <p className="text-gray-500 dark:text-gray-300">Navigate effortlessly with our smart maps featuring key spots.</p>
-               </div>
-
-               <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
-                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">💬</div>
-                  <h3 className="font-bold text-xl mb-3 dark:text-white">Community</h3>
-                  <p className="text-gray-500 dark:text-gray-300">Join thousands of travelers sharing real reviews and experiences.</p>
-               </div>
+            <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">🏖️</div>
+              <h3 className="font-bold text-xl mb-3 dark:text-white">Beach Guides</h3>
+              <p className="text-gray-500 dark:text-gray-300">Curated lists and hidden gems for the perfect sun-soaked getaway.</p>
             </div>
-         </div>
+
+            <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">📍</div>
+              <h3 className="font-bold text-xl mb-3 dark:text-white">Interactive Maps</h3>
+              <p className="text-gray-500 dark:text-gray-300">Navigate effortlessly with our smart maps featuring key spots.</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-700 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">💬</div>
+              <h3 className="font-bold text-xl mb-3 dark:text-white">Community</h3>
+              <p className="text-gray-500 dark:text-gray-300">Join thousands of travelers sharing real reviews and experiences.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <Testimonial />
@@ -345,8 +359,8 @@ function Home() {
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl relative overflow-hidden">
             <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-               <h3 className="font-bold text-gray-700 dark:text-white flex items-center gap-2"><FaMapMarkerAlt className="text-red-500"/> Location Map</h3>
-               <button
+              <h3 className="font-bold text-gray-700 dark:text-white flex items-center gap-2"><FaMapMarkerAlt className="text-red-500" /> Location Map</h3>
+              <button
                 onClick={() => setMapModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-red-500 hover:text-white transition-colors"
               >

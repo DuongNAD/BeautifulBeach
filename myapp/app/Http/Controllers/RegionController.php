@@ -21,7 +21,14 @@ class RegionController extends Controller
     {
         $search = $request->query("search");
         try {
-            return $this->response->json(true, data: !$search ? Region::all() : Region::where('name', 'LIKE', '%' . $search . '%')->get() , status: 200);
+            $query = Region::query();
+            
+            if ($search) {
+                $regions = $query->where('name', 'LIKE', '%' . $search . '%')->paginate(10)->appends(['search' => $search]);
+            } else {
+                $regions = $query->paginate(10);
+            }
+            return $this->response->json(true, data: $regions, status: 200);
         } catch (\Throwable $th) {
             return $this->response->json(false, errors: $th->getMessage(), status: 500);
         }

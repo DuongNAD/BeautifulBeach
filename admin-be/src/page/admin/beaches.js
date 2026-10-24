@@ -11,6 +11,7 @@ import {
 import { Editor } from "@tinymce/tinymce-react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import Pagination from "../../components/Pagination";
 
 function Beaches() {
   const [listBeaches, setListBeaches] = useState([]);
@@ -20,6 +21,11 @@ function Beaches() {
   const [loading, setLoading] = useState(true);
   const [previewImg, setPreviewImg] = useState(null);
   const [search, setSearch] = useState("");
+  const [filterRegion, setFilterRegion] = useState("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [formData, setFromData] = useState({
     name: "",
@@ -31,27 +37,63 @@ function Beaches() {
     longitude: "",
     images: [],
   });
+
   const handleEditorChange = (content) => {
     setFromData({ ...formData, description: content });
   };
+
+  const fetchDataRegion = async () => {
+    try {
+      const rs = await region(1); // just get first page or configure to get all
+      // Assuming region returns non-paginated or we just need the list.
+      // If region is also paginated, we might need a separate endpoint to get all regions for the dropdown.
+      // For now, let's assume it works or we just use rs.data.data.data if it's paginated.
+      const regionData = rs.data?.data?.data ? rs.data?.data?.data : rs.data?.data;
+      setRegions(regionData || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchData = async (page = 1) => {
+    setLoading(true);
+    try {
+      let rs;
+      if (search) {
+        rs = await searchBeaches(search, page, filterRegion);
+      } else {
+        rs = await beaches(page, filterRegion);
+      }
+
+      if (rs.data?.data?.data) {
+        // Paginated response
+        setListBeaches(rs.data.data.data);
+        setTotalPages(rs.data.data.last_page);
+      } else {
+        // Non-paginated fallback
+        setListBeaches(rs.data?.data || []);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchDataRegion();
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, filterRegion]);
 
   const handleChange = (e) => {
     setFromData({ ...formData, [e.target.name]: e.target.value });
   };
-  const fetchDataRegion = async () => {
-    try {
-      const rs = await region();
-      setRegions(rs.data?.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
@@ -78,10 +120,9 @@ function Beaches() {
         rs = await addBeaches(data);
       } else {
         data.append("_method", "PUT");
-
         rs = await updateBeaches(data, formData.id);
       }
-      fetchData();
+      fetchData(currentPage);
       toast.success(rs.data?.message);
       setFromData({
         name: "",
@@ -103,21 +144,11 @@ function Beaches() {
       } else {
         toast.error("Có lỗi xảy ra, vui lòng thử lại!");
       }
-      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
   };
-  const fetchData = async () => {
-    try {
-      const rs = await beaches();
-      setListBeaches(rs.data?.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
   const handleEdit = (value) => {
     const images =
       value.images?.map((img) =>
@@ -125,9 +156,8 @@ function Beaches() {
       ) || [];
     setFromData({ ...value, images });
     setShowForm(true);
-
-    console.log(formData);
   };
+
   const handleDelete = (value) => {
     Swal.fire({
       title: "Are you sure you want to delete?",
@@ -139,55 +169,91 @@ function Beaches() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const rs = await deleteBeache(value.id);
+          await deleteBeache(value.id);
           Swal.fire("Deleted!", "Data has been deleted.", "success");
-          fetchData();
+          fetchData(currentPage);
         } catch (error) {
           Swal.fire("Failed!", "Delete failed, please try again.", "error");
         }
       }
     });
   };
-  const handleSearch = async () => {
-    try {
-      const rs = await searchBeaches(search);
-      setListBeaches(rs.data?.data || []);
-    } catch (error) {}
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchData(1);
   };
-  if (loading) return <p>⏳ Đang tải dữ liệu...</p>;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  if (loading && listBeaches.length === 0) return <p>⏳ Đang tải dữ liệu...</p>;
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-3">
+    <div className="bg-white p-6 rounded-lg shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
         <button
-          type="submit"
-          className="px-5 py-2 rounded-xl bg-blue-600 text-white font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-300 mb-3"
-          onClick={() => (showForm ? setShowForm(false) : setShowForm(true))}
+          type="button"
+          className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-300"
+          onClick={() => setShowForm(!showForm)}
         >
-          Add
+          {showForm ? 'Đóng form' : '+ Thêm Bãi Biển'}
         </button>
-        <input
-          type="text"
-          placeholder="Search..."
-          className="px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch();
-            }
-          }}
-        />
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Tìm kiếm bãi biển..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+          />
+          <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+
+        <div className="relative w-48">
+          <select
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition appearance-none bg-white text-gray-700"
+            value={filterRegion}
+            onChange={(e) => {
+              setFilterRegion(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="">Tất cả Vùng miền</option>
+            {regionlist.map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSearch}
+          className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+        >
+          Tìm kiếm
+        </button>
       </div>
-      {showForm ? (
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 mb-3">
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">{formData.id ? 'Cập nhật' : 'Thêm mới'} Bãi Biển</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input
               type="text"
               name="name"
-              placeholder="Name Beaches"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-               disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Tên bãi biển"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={formData.name}
               onChange={handleChange}
               required
@@ -196,10 +262,8 @@ function Beaches() {
             <input
               type="text"
               name="location"
-              placeholder="Name location"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-               disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Vị trí / Địa chỉ"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={formData.location}
               onChange={handleChange}
               required
@@ -208,10 +272,8 @@ function Beaches() {
             <input
               type="text"
               name="longitude"
-              placeholder="Longitude"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-               disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Kinh độ (Longitude)"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={formData.longitude}
               onChange={handleChange}
               required
@@ -220,10 +282,8 @@ function Beaches() {
             <input
               type="text"
               name="latitude"
-              placeholder="Latitude"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-               disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Vĩ độ (Latitude)"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={formData.latitude}
               onChange={handleChange}
               required
@@ -233,197 +293,146 @@ function Beaches() {
               name="region_id"
               value={formData.region_id}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-               disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
               required
             >
-              <option value="">-- Select regions --</option>
-              {regionlist
-                ? regionlist.map((item) => (
-                    <option value={item.id}>{item.name}</option>
-                  ))
-                : null}
+              <option value="">-- Chọn vùng miền --</option>
+              {regionlist.map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
             </select>
+          </div>
+
+          <div className="mb-4">
             <Editor
               apiKey="h9m4zl3z71i528wkvqa05goi539oxxpr2prkmoenfonsfbzg"
               value={formData.description}
               init={{
-                height: 400,
-                menubar: true,
-                plugins: "lists link image table code wordcount",
-                toolbar:
-                  "undo redo | formatselect | bold italic underline | " +
-                  "alignleft aligncenter alignright | bullist numlist | link image | code",
+                height: 300,
+                menubar: false,
+                plugins: "lists link image code",
+                toolbar: "undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link blockquote",
               }}
               onEditorChange={handleEditorChange}
             />
+          </div>
 
-            <label className="flex items-center justify-center w-48 px-4 py-2 bg-blue-600 text-white rounded-lg shadow cursor-pointer hover:bg-blue-700 transition">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+          <div className="mb-6">
+            <label className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Select photo
+              Chọn hình ảnh
               <input
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) =>
-                  setFromData({
-                    ...formData,
-                    images: [...formData.images, ...Array.from(e.target.files)],
-                  })
-                }
+                onChange={(e) => setFromData({ ...formData, images: [...formData.images, ...Array.from(e.target.files)] })}
                 className="hidden"
               />
             </label>
+
+            <div className="flex gap-3 flex-wrap mt-4">
+              {formData.images.map((file, index) => {
+                let src = file instanceof File ? URL.createObjectURL(file) : (file.url?.startsWith("http") ? file.url : url + file.url);
+                return (
+                  <div key={index} className="relative group rounded-lg overflow-hidden border shadow-sm">
+                    <img src={src} alt="preview" className="w-24 h-24 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFromData({ ...formData, images: formData.images.filter((_, i) => i !== index) })}
+                      className="absolute inset-0 bg-black bg-opacity-50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {formData.images.map((file, index) => {
-              let src = "";
-
-              if (file instanceof File) {
-                src = URL.createObjectURL(file);
-              } else if (file.url) {
-                src = file.url.startsWith("http") ? file.url : url + file.url;
-              } else {
-                src = file;
-              }
-
-              return (
-                <div key={index} className="relative w-24 h-24">
-                  <img
-                    src={src}
-                    alt="preview"
-                    className="w-24 h-24 object-cover rounded border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newImages = formData.images.filter(
-                        (_, i) => i !== index
-                      );
-                      setFromData({ ...formData, images: newImages });
-                    }}
-                    className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition"
-                  >
-                    &times;
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            type="submit"
-            className="btn-submit mb-5"
-            disabled={isLoading}
-          >
-            {isLoading
-              ? "Processing..."
-              : formData.id
-              ? "Update"
-              : "Add Beaches"}
+          <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition w-full md:w-auto" disabled={isLoading}>
+            {isLoading ? "Đang xử lý..." : formData.id ? "Cập nhật Bãi Biển" : "Lưu Bãi Biển"}
           </button>
         </form>
-      ) : null}
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Location</th>
-            <th>Region</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>Description</th>
-            <th>Images</th>
+      )}
 
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {listBeaches.map((item) => (
-            <tr key={item.id}>
-              <td>{item.name}</td>
-              <td>{item.location}</td>
-              <td>{item.region.name}</td>
-              <td>{item.latitude}</td>
-              <td>{item.longitude}</td>
-
-              <td>
-                <div
-                  className="max-w-xs overflow-hidden text-ellipsis line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
-                />
-              </td>
-              <td>
-                <div className="flex gap-2 flex-wrap max-w-xs">
-                  {item.images?.map((img, index) => (
-                    <img
-                      key={index}
-                      src={
-                          item.images?.[0]?.img_link?.startsWith('http') 
-                              ? item.images[0].img_link 
-                              : `http://127.0.0.1:8000${item.images?.[0]?.img_link}`
-                      }
-                      alt={item.name}
-                      onClick={() => setPreviewImg(url + "" + img.img_link)}
-                      className="w-16 h-16 object-cover rounded border"
-                    />
-                  ))}
-                </div>
-              </td>
-
-              <td>
-                <button
-                  className="btn-edit"
-                  onClick={() => handleEdit(item)}
-                  disabled={isLoading}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn-block"
-                  onClick={() => handleDelete(item)}
-                  disabled={isLoading}
-                >
-                  Delete
-                </button>
-              </td>
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 text-sm text-left">
+          <thead className="bg-gray-50 text-gray-600 font-medium">
+            <tr>
+              <th className="px-4 py-3">Tên / Vị trí</th>
+              <th className="px-4 py-3">Vùng</th>
+              <th className="px-4 py-3 hidden md:table-cell">Tọa độ</th>
+              <th className="px-4 py-3">Mô tả</th>
+              <th className="px-4 py-3">Hiển thị</th>
+              <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {listBeaches.length > 0 ? listBeaches.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50 transition">
+                <td className="px-4 py-4">
+                  <div className="font-semibold text-gray-900">{item.name}</div>
+                  <div className="text-gray-500 text-xs mt-1">{item.location}</div>
+                </td>
+                <td className="px-4 py-4"><span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">{item.region?.name}</span></td>
+                <td className="px-4 py-4 hidden md:table-cell text-gray-500">
+                  <div>Lat: {item.latitude}</div>
+                  <div>Lng: {item.longitude}</div>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="max-w-xs text-xs text-gray-500 line-clamp-2" dangerouslySetInnerHTML={{ __html: item.description }} />
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex -space-x-2 overflow-hidden">
+                    {item.images?.slice(0, 3).map((img, index) => (
+                      <img
+                        key={index}
+                        src={img.img_link?.startsWith('http') ? img.img_link : `${url}${img.img_link}`}
+                        alt={item.name}
+                        onClick={() => setPreviewImg(img.img_link?.startsWith('http') ? img.img_link : url + img.img_link)}
+                        className="inline-block h-10 w-10 object-cover rounded-full ring-2 ring-white cursor-pointer hover:z-10 transform hover:scale-110 transition"
+                      />
+                    ))}
+                    {item.images?.length > 3 && (
+                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-xs font-medium text-gray-600 ring-2 ring-white">
+                        +{item.images.length - 3}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-right space-x-2">
+                  <button className="text-blue-600 hover:text-blue-900 font-medium" onClick={() => handleEdit(item)} disabled={isLoading}>Sửa</button>
+                  <button className="text-red-600 hover:text-red-900 font-medium" onClick={() => handleDelete(item)} disabled={isLoading}>Xóa</button>
+                </td>
+              </tr>
+            )) : (
+              <tr><td colSpan="6" className="px-4 py-8 text-center text-gray-500">Không tìm thấy dữ liệu.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
+
       {previewImg && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="relative">
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" onClick={() => setPreviewImg(null)}>
+          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setPreviewImg(null)}
-              className="absolute top-2 right-2 text-white text-2xl font-bold 
-             bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center
-             shadow hover:bg-opacity-75 transition"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition"
             >
-              &times;
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-
-            <img
-              src={previewImg}
-              alt="preview"
-              className="max-w-[90vw] max-h-[90vh] rounded shadow-lg"
-            />
+            <img src={previewImg} alt="preview" className="w-full h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl" />
           </div>
         </div>
       )}

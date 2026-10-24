@@ -21,6 +21,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.error("Unauthorized - hãy đăng nhập lại");
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user");
+      window.location.href = "/login-account";
     }
     return Promise.reject(error);
   }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AccoutController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ApiHomeController;
 use App\Http\Controllers\BeachController; // ✅ CẬP NHẬT: Dùng BeachController mới (số ít)
 use App\Http\Controllers\ChangePasswordController;
@@ -9,10 +9,10 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\FavoritesController;
 use App\Http\Controllers\ImageBannerController;
-use App\Http\Controllers\LoginAccoutController;
+use App\Http\Controllers\LoginAccountController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegionController;
-use App\Http\Controllers\UpdateAccoutController;
+use App\Http\Controllers\UpdateAccountController;
 use App\Http\Controllers\VisitController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,14 +29,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // --- Auth Routes ---
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/login-account', [LoginAccoutController::class, 'login']);
+Route::post('/login-account', [LoginAccountController::class, 'login']);
 
-Route::apiResource('account', AccoutController::class)->except(['store']);
-Route::post('account/change-otp', [AccoutController::class, 'store'])->name('account.change-otp');
-Route::post('account/verify-account', [AccoutController::class, 'verifyAccount'])->name('account.verify-account');
+Route::apiResource('account', AccountController::class)->except(['store']);
+Route::post('account/change-otp', [AccountController::class, 'store'])->name('account.change-otp');
+Route::post('account/verify-account', [AccountController::class, 'verifyAccount'])->name('account.verify-account');
 
 
-Route::prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     
     Route::apiResource('region', RegionController::class);
 
@@ -45,8 +45,8 @@ Route::prefix('admin')->group(function () {
     Route::apiResource('content', ContentController::class);
     Route::apiResource('image-banner', ImageBannerController::class);
     
-    Route::get('account-list', [AccoutController::class, 'index']);
-    Route::post('account-list', [AccoutController::class, 'permissionsAccout']);
+    Route::get('account-list', [AccountController::class, 'index']);
+    Route::post('account-list', [AccountController::class, 'permissionsAccout']);
     
     Route::get('comment', [CommentAdminController::class, 'list']);
     Route::post('comment', [CommentAdminController::class, 'blockComment']);

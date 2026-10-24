@@ -1,24 +1,28 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { loginAccout } from "../../api/function";
+import { loginAccount } from "../../api/function";
 import { useNavigate } from "react-router-dom";
 
-function LoginAccout() {
+export default function LoginAccout() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const rs = await loginAccout(formData);
+      const rs = await loginAccount(formData);
 
       const token = rs?.data?.data?.token;
       const role = rs?.data?.data?.role;
@@ -91,5 +95,3 @@ function LoginAccout() {
     </div>
   );
 }
-
-export default LoginAccout;

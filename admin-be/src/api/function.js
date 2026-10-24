@@ -1,19 +1,26 @@
-import { data } from "react-router-dom";
+
 import api from "./api";
 
 export const login = (data) => api.post("login", data);
-export const region = () => api.get("admin/region");
-export const searchRegion = (keyword) =>
-  api.get("admin/region?search=" + keyword);
-export const searchBeaches = (keyword) =>
-  api.get("admin/beaches?search=" + keyword);
-export const searchAccount = (keyword) =>
-  api.get("admin/account-list?search=" + keyword);
+export const region = (page = 1) => api.get("admin/region?page=" + page);
+export const searchRegion = (keyword, page = 1) =>
+  api.get(`admin/region?search=${keyword}&page=${page}`);
+export const searchBeaches = (keyword, page = 1, region_id = "") => {
+  let url = `admin/beaches?search=${keyword}&page=${page}`;
+  if (region_id) url += `&region_id=${region_id}`;
+  return api.get(url);
+};
+export const searchAccount = (keyword, page = 1) =>
+  api.get(`admin/account-list?search=${keyword}&page=${page}`);
 
 export const addRegion = (data) => api.post("admin/region", data);
 export const updateRegion = (data, id) => api.post("admin/region/" + id, data);
 export const deleteRegion = (id) => api.delete("admin/region/" + id);
-export const beaches = () => api.get("admin/beaches");
+export const beaches = (page = 1, region_id = "") => {
+  let url = `admin/beaches?page=${page}`;
+  if (region_id) url += `&region_id=${region_id}`;
+  return api.get(url);
+};
 export const addBeaches = (data) =>
   api.post("admin/beaches", data, {
     headers: {
@@ -28,8 +35,8 @@ export const updateBeaches = (data, id) =>
   });
 export const deleteBeache = (id) => api.delete("admin/beaches/" + id);
 export const url = process.env.REACT_APP_API_URL;
-export const loginAccout = (data) => api.post("login-account", data);
-export const accounts = () => api.get("admin/account-list");
+export const loginAccount = (data) => api.post("login-account", data);
+export const accounts = (page = 1) => api.get("admin/account-list?page=" + page);
 export const accountsStatus = (data) => api.post("admin/account-list", data);
 
 export const sentOtpPass = (data) => api.post("customer/sent-otp", data);
@@ -115,4 +122,3 @@ export const accountUpdate = (data) =>
       "Content-Type": "multipart/form-data",
     },
   });
-  
